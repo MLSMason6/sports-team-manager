@@ -59,6 +59,30 @@ try {
             </tr>
             <?php endforeach; ?>
         </table>
+
+        <!-- Chart -->
+        <canvas id="teamChart" width="600" height="300"></canvas>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const ctxTeam = document.getElementById('teamChart').getContext('2d');
+            const teamChart = new Chart(ctxTeam, {
+                type: 'bar',
+                data: {
+                    labels: <?= json_encode(array_column($results, 'game_date')) ?>,
+                    datasets: [{
+                        label: 'Team Points',
+                        data: <?= json_encode(array_column($results, 'team_points')) ?>,
+                        backgroundColor: 'orange'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        </script>
     <?php endif; ?>
 </body>
 </html>

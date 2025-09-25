@@ -31,7 +31,10 @@ try {
 
 <!DOCTYPE html>
 <html>
-<head><title>Player Report</title></head>
+<head>
+    <title>Player Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
 <body>
     <h2>Player Report</h2>
     <form method="GET">
@@ -61,6 +64,31 @@ try {
             </tr>
             <?php endforeach; ?>
         </table>
+
+        <!-- Chart.js graph -->
+        <canvas id="pointsChart" width="600" height="300"></canvas>
+        <script>
+            const ctx = document.getElementById('pointsChart').getContext('2d');
+            const pointsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: <?= json_encode(array_column($stats, 'game_date')) ?>,
+                    datasets: [{
+                        label: 'Points Per Game',
+                        data: <?= json_encode(array_column($stats, 'points')) ?>,
+                        borderColor: 'blue',
+                        fill: false,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        </script>
     <?php endif; ?>
 </body>
 </html>
