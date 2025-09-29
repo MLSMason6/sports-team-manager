@@ -1,3 +1,11 @@
+<?php 
+session_start();
+if (!isset($_SESSION['user_id'])) { 
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -45,6 +53,7 @@
     <header>
         <h1>⚽ Sports Team Manager</h1>
         <p>Manage Teams, Playersm Games, Stats, and Reports</p>
+        <p>Welcome, <?= $_SESSION['username'] ?> | <a href="logout.php" style="color:yellow;">Logout</a></p>
     </header>
 
     <div class="container">

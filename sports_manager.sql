@@ -91,3 +91,15 @@ WHERE t.team_name = 'Lions'
 GROUP BY p.player_id 
 ORDER BY total_points DESC 
 LIMIT 1;
+
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY, 
+    username VARCHAR(50) UNIQUE NOT NULL, 
+    password VARCHAR(255) NOT NULL, -- hashed password
+    role VARCHAR(20) DEFAULT 'coach', -- could be 'coach' or 'admin'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Test User 
+INSERT INTO Users (username, password, role)
+VALUES ('admin', 'password123', 'admin');
