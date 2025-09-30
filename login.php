@@ -17,7 +17,7 @@ try {
         $stmt->execute(['username' => $inputUser]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && $inputPass === $user['password']) { 
+        if ($user && password_verify($inputPass, $user['password'])) { 
             // ⚠️ later replace with password_verify($inputPass, $user['password'])
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['username'];
