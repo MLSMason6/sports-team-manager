@@ -4,6 +4,7 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+$role = $_SESSION['role'];
 ?>
 
 <!DOCTYPE html>
@@ -53,16 +54,25 @@ if (!isset($_SESSION['user_id'])) {
     <header>
         <h1>⚽ Sports Team Manager</h1>
         <p>Manage Teams, Playersm Games, Stats, and Reports</p>
-        <p>Welcome, <?= $_SESSION['username'] ?> | <a href="logout.php" style="color:yellow;">Logout</a></p>
+        <p>Welcome, <?= $_SESSION['username'] ?> (<?= $role ?>) | <a href="logout.php" style="color:yellow;">Logout</a></p>
     </header>
 
     <div class="container">
+        <?php if ($role === 'admin'): ?>
         <!-- Teams -->
          <div class="card">
             <h2>Teams</h2>
             <a href="add_team.php">➕ Add Team</a>
             <a href="manage_teams.php">📋 Manage Teams</a>
          </div>
+
+         <!-- Players -->
+        <div class="card">
+            <h2>Players</h2>
+            <a href="add_player.php">➕ Add Player</a>
+            <a href="manage_players.php">📋 Manage Players</a>
+            <a href="players.php">👀 View Players</a>
+        </div>
 
         <!-- Games -->
          <div class="card">
@@ -71,13 +81,13 @@ if (!isset($_SESSION['user_id'])) {
             <a href="manage_games.php">📋 Manage Games</a>
         </div>
 
-         <!-- Stats -->
+         <!-- Stats  (accessible by both Admin & Coach)  -->
         <div class="card">
             <h2>Stats</h2>
             <a href="add_stats.php">➕ Add Stats</a>
         </div>
 
-        <!-- Reports -->
+        <!-- Reports (accessible by both Admin & Coach) -->
         <div class="card">
             <h2>Reports</h2>
             <a href="player_report.php">📊 Player Report</a>
