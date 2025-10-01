@@ -103,3 +103,6 @@ CREATE TABLE Users (
 -- Test User 
 INSERT INTO Users (username, password, role)
 VALUES ('admin', 'password123', 'admin');
+
+-- Super Admin 
+ALTER TABLE Users MODIFY role ENUM('superadmin','admin','coach') DEFAULT 'coach';

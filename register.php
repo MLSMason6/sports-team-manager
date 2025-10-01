@@ -1,4 +1,12 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+if ($_SESSION['role'] !== 'superadmin') {
+    die("Access denied. Only Super Admins can register new users.");
+}
 $host = "localhost";
 $dbname = "sports_manager";
 $username = "root";

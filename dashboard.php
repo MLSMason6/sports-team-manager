@@ -93,6 +93,15 @@ $role = $_SESSION['role'];
             <a href="player_report.php">📊 Player Report</a>
             <a href="team_report.php">📈 Team Report</a>
         </div>
+
+        <!-- Users -->
+         <?php if ($role === 'superadmin'): ?>
+            <div class="card">
+                <h2>Users</h2>
+                <a href="register.php">➕ Register User</a>
+                <a href="manage_users.php">👥 Manage Users</a>
+            </div>
+            <?php endif; ?>
     </div>
 </body>
 </html>
