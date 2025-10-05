@@ -38,6 +38,9 @@ try {
             'jersey_number' => $jersey
         ]);
 
+        require_once "log_action.php";
+        logAction($pdo, $_SESSION['user_id'], "Added player", "Name: $firstName $lastName, Team ID: $teamId");
+
         echo "<p style='color:green;'>Player added successfully!</p>";
     }
 

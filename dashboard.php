@@ -53,7 +53,7 @@ $role = $_SESSION['role'];
 <body>
     <header>
         <h1>⚽ Sports Team Manager</h1>
-        <p>Manage Teams, Playersm Games, Stats, and Reports</p>
+        <p>Manage Teams, Players Games, Stats, and Reports</p>
         <p>Welcome, <?= $_SESSION['username'] ?> (<?= $role ?>) | <a href="logout.php" style="color:yellow;">Logout</a></p>
     </header>
 
@@ -95,13 +95,21 @@ $role = $_SESSION['role'];
         </div>
 
         <!-- Users -->
-         <?php if ($role === 'superadmin'): ?>
+            <?php if ($role === 'superadmin'): ?>
             <div class="card">
                 <h2>Users</h2>
                 <a href="register.php">➕ Register User</a>
                 <a href="manage_users.php">👥 Manage Users</a>
             </div>
             <?php endif; ?>
+
+            <?php if ($role === 'superadmin'): ?>
+            <div class="card">
+                <h2>Audit Logs</h2>
+                <a href="view_logs.php">📜 View Logs</a>
+            </div>
+            <?php endif; ?>
+        
     </div>
 </body>
 </html>

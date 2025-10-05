@@ -27,6 +27,9 @@ try {
             'minutes' => $minutes
         ]);
 
+        require_once "log_action.php";
+        logAction($pdo, $_SESSION['user_id'], "Added stats", "Player ID: $playerId, Game ID: $gameId, Points: $points");
+
         echo "<p style='color:green;'>Stats added successfully!</p>";
     }
 

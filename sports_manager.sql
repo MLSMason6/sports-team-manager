@@ -106,3 +106,13 @@ VALUES ('admin', 'password123', 'admin');
 
 -- Super Admin 
 ALTER TABLE Users MODIFY role ENUM('superadmin','admin','coach') DEFAULT 'coach';
+
+-- Audit Log 
+CREATE TABLE AuditLog (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(255) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);

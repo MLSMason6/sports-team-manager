@@ -43,6 +43,10 @@ try {
             $stmt = $pdo->prepare("UPDATE Users SET role = :role WHERE user_id = :id");
             $stmt->execute(['role' => $newRole, 'id' => $userId]);
             echo "<p style='color:green;'>User role updated successfully!</p>";
+
+            require_once "log_action.php";
+            logAction($pdo, $_SESSION['user_id'], "Updated role", 
+                "User ID: $userId → New Role: $newRole");
         }
     }
     
