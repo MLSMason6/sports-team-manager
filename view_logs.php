@@ -57,6 +57,19 @@ try {
     $stmt->execute($params);
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // --- CSV Export ---
+    if (isset($_GET['export']) && $_GET['export'] === 'csv') { 
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="audit_logs.csv"');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Log ID', 'User', 'Action', 'Details', 'Date']);
+        foreach ($logs as $log) {
+            fputcsv($output, [$log['log_id'], $log['username'], $log['action'], $log['details'], $log['created_at']]); 
+        } 
+        fclose($output); 
+        exit();
+    }
+
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
@@ -65,7 +78,7 @@ try {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Audit Logs - Filters</title>
+    <title>Audit Logs - Filters & Exports</title>
     <style>
             body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 20px; }
             h2 { color: #2c3e50; }
@@ -81,7 +94,7 @@ try {
         </style>
 </head>
 <body>
-    <h2>Audit Logs (Filter & Search)</h2>
+    <h2>Audit Logs (Filter, Search, Export)</h2>
 
     <form method="GET">
             <label>User:</label>
@@ -105,6 +118,7 @@ try {
     
             <button type="submit">Apply Filters</button>
             <a href="view_logs.php">Reset</a>
+            <button type="submit" name="export" value="csv">Export CSV</button>
         </form>
     <table>
         <tr><th>ID</th><th>User</th><th>Action</th><th>Details</th><th>Date</th></tr>
