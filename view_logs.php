@@ -17,10 +17,9 @@ try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // --- Load filter options ---
     $users = $pdo->query("SELECT user_id, username FROM Users ORDER BY username ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-    // --- Handle filters --- 
+    // --- Filters --- 
     $conditions = [];
     $params = [];
 
@@ -43,20 +42,18 @@ try {
 
     $whereClause = count($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
 
-    // --- Pagination setup --- 
-    $perPage = 50; // logs per page
+    // --- Pagination --- 
+    $perPage = 50; 
     $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
     if ($page < 1) $page = 1;
     $offset = ($page - 1) * $perPage;
 
-    // --- Get total count for pagination --- 
     $countSql = "SELECT COUNT(*) FROM AuditLog a JOIN Users u ON a.user_id = u.user_id $whereClause";
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
     $totalLogs = $countStmt->fetchColumn();
     $totalPages = ceil($totalLogs / $perPage);
 
-    // --- Get logs for current page ---
     $sql = "SELECT a.log_id, u.username, a.action, a.details, a.created_at
             FROM AuditLog a 
             JOIN Users u ON a.user_id = u.user_id
@@ -117,6 +114,30 @@ try {
                         text-decoration: none;
                     }
                     .pagination span { background: gray; }
+                    /* Modal styles */
+                            .modal {
+                                display: none; 
+                                position: fixed; 
+                                z-index: 1000; 
+                                left: 0; top: 0;
+                                width: 100%; height: 100%; 
+                                overflow: auto; 
+                                background-color: rgba(0,0,0,0.6);
+                            }
+                            .modal-content {
+                                background-color: #fff;
+                                margin: 10% auto; 
+                                padding: 20px; 
+                                border-radius: 8px; 
+                                width: 60%;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                            }
+                            .close-btn {
+                                float: right; 
+                                font-size: 20px; 
+                                cursor: pointer; 
+                                color: #2c3e50;
+                            }
         </style>
 </head>
 <body>
@@ -156,8 +177,15 @@ try {
                 <td><?= $log['log_id'] ?></td>
                 <td><?= htmlspecialchars($log['username']) ?></td>
                 <td><?= htmlspecialchars($log['action']) ?></td>
-                <td><?= htmlspecialchars($log['details']) ?></td>
+                <td><?= htmlspecialchars(substr($log['details'], 0, 40)) ?><?= strlen($log['details']) > 40 ? '...' : '' ?></td>
                 <td><?= $log['created_at'] ?></td>
+                <td><a href="#" class="view-details" 
+                                    data-id="<?= $log['log_id'] ?>"
+                                    data-user="<?= htmlspecialchars($log['username']) ?>"
+                                    data-action="<?= htmlspecialchars($log['action']) ?>"
+                                    data-details="<?= htmlspecialchars($log['details']) ?>"
+                                    data-date="<?= $log['created_at'] ?>"
+                                >👁 View</a></td>
             </tr>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -169,15 +197,49 @@ try {
                <?php if ($page > 1): ?>
                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>">⬅ Prev</a>
                <?php endif; ?>
-   
                <span>Page <?= $page ?> of <?= $totalPages ?></span>
-   
                <?php if ($page < $totalPages): ?>
                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>">Next ➡</a>
                <?php endif; ?>
            </div>
        <?php endif; ?> 
-
+        
     <p><a href="dashboard.php">⬅ Back to Dashboard</a></p>
+
+    <!-- Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>Log Details</h3>
+            <p><strong>ID:</strong> <span id="modalId"></span></p>
+            <p><strong>User:</strong> <span id="modalUser"></span></p>
+            <p><strong>Action:</strong> <span id="modalAction"></span></p>
+            <p><strong>Details:</strong></p>
+            <pre id="modalDetails" style="background:#f4f4f4; padding:10px; border-radius:5px;"></pre>
+            <p><strong>Date:</strong> <span id="modalDate"></span></p>
+        </div>
+    </div> 
+    
+    <script>
+        // Modal JS
+        const modal = document.getElementById('detailsModal');
+        const closeBtn = document.querySelector('.close-btn');
+        const detailLinks = document.querySelectorAll('.view-details');
+    
+        detailLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('modalId').textContent = link.dataset.id;
+                document.getElementById('modalUser').textContent = link.dataset.user;
+                document.getElementById('modalAction').textContent = link.dataset.action;
+                document.getElementById('modalDetails').textContent = link.dataset.details;
+                document.getElementById('modalDate').textContent = link.dataset.date;
+                modal.style.display = 'block';
+            });
+        });
+    
+        closeBtn.onclick = () => modal.style.display = 'none';
+        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+    </script>
 </body>
 </html>
