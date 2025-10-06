@@ -41,20 +41,34 @@ try {
         $params['end_date'] = $_GET['end_date'];
     }
 
-    $whereClause = "";
-    if (count($conditions) > 0) { 
-        $whereClause = "WHERE" . implode(" AND ", $conditions);
-    }
+    $whereClause = count($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
 
+    // --- Pagination setup --- 
+    $perPage = 50; // logs per page
+    $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+    if ($page < 1) $page = 1;
+    $offset = ($page - 1) * $perPage;
+
+    // --- Get total count for pagination --- 
+    $countSql = "SELECT COUNT(*) FROM AuditLog a JOIN Users u ON a.user_id = u.user_id $whereClause";
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($params);
+    $totalLogs = $countStmt->fetchColumn();
+    $totalPages = ceil($totalLogs / $perPage);
+
+    // --- Get logs for current page ---
     $sql = "SELECT a.log_id, u.username, a.action, a.details, a.created_at
             FROM AuditLog a 
             JOIN Users u ON a.user_id = u.user_id
             $whereClause 
             ORDER BY a.created_at DESC 
-            LIMIT 200";
+            LIMIT :limit OFFSET :offset";
     
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+    foreach($params as $key => &$value) { $stmt->bindParam(":$key", $value);}
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // --- CSV Export ---
@@ -85,16 +99,28 @@ try {
             form { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
             label { font-weight: bold; margin-right: 10px; }
             input, select { margin-right: 15px; }
+            button { cursor: pointer; }
             table { border-collapse: collapse; width: 100%; background: white; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background-color: #2c3e50; color: white; }
             tr:nth-child(even) { background: #f9f9f9; }
             a { color: #2980b9; text-decoration: none; }
             a:hover { text-decoration: underline; }
+            .pagination { margin-top: 15px; text-align: center; }
+                    .pagination a, .pagination span {
+                        display: inline-block;
+                        margin: 0 5px;
+                        padding: 6px 12px;
+                        border-radius: 5px;
+                        background: #2c3e50;
+                        color: white;
+                        text-decoration: none;
+                    }
+                    .pagination span { background: gray; }
         </style>
 </head>
 <body>
-    <h2>Audit Logs (Filter, Search, Export)</h2>
+    <h2>Audit Logs (Filter, Export, Pagination)</h2>
 
     <form method="GET">
             <label>User:</label>
@@ -136,6 +162,21 @@ try {
             <?php endforeach; ?>
         <?php endif; ?>
     </table>
+
+    <!-- Pagination Controls -->
+       <?php if ($totalPages > 1): ?>
+           <div class="pagination">
+               <?php if ($page > 1): ?>
+                   <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>">⬅ Prev</a>
+               <?php endif; ?>
+   
+               <span>Page <?= $page ?> of <?= $totalPages ?></span>
+   
+               <?php if ($page < $totalPages): ?>
+                   <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>">Next ➡</a>
+               <?php endif; ?>
+           </div>
+       <?php endif; ?> 
 
     <p><a href="dashboard.php">⬅ Back to Dashboard</a></p>
 </body>
