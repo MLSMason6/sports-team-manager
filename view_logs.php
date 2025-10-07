@@ -207,17 +207,17 @@ try {
     <p><a href="dashboard.php">⬅ Back to Dashboard</a></p>
 
     <!-- Modal -->
-    <div id="detailsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h3>Log Details</h3>
-            <p><strong>ID:</strong> <span id="modalId"></span></p>
-            <p><strong>User:</strong> <span id="modalUser"></span></p>
-            <p><strong>Action:</strong> <span id="modalAction"></span></p>
-            <p><strong>Details:</strong></p>
-            <pre id="modalDetails" style="background:#f4f4f4; padding:10px; border-radius:5px;"></pre>
-            <p><strong>Date:</strong> <span id="modalDate"></span></p>
-        </div>
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>Log Details</h3>
+        <p><strong>ID:</strong> <span id="modalId"></span></p>
+        <p><strong>User:</strong> <span id="modalUser"></span></p>
+        <p><strong>Action:</strong> <span id="modalAction"></span></p>
+        <p><strong>Details (editable):</strong></p>
+        <textarea id="modalDetails" style="width:100%; height:120px; padding:10px; border-radius:5px; border:1px solid #ccc;"></textarea>
+        <p><strong>Date:</strong> <span id="modalDate"></span></p>
+        <button id="saveChanges" style="margin-top:10px; background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">💾 Save Changes</button>
+        <p id="saveMessage" style="color:green; margin-top:8px;"></p>
     </div> 
     
     <script>
@@ -225,7 +225,9 @@ try {
         const modal = document.getElementById('detailsModal');
         const closeBtn = document.querySelector('.close-btn');
         const detailLinks = document.querySelectorAll('.view-details');
-    
+        const saveBtn = document.getElementById('saveChanges');
+        const saveMsg = document.getElementById('saveMessage');
+
         detailLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -234,12 +236,41 @@ try {
                 document.getElementById('modalAction').textContent = link.dataset.action;
                 document.getElementById('modalDetails').textContent = link.dataset.details;
                 document.getElementById('modalDate').textContent = link.dataset.date;
+                saveMsg.textContnet = "";
                 modal.style.display = 'block';
             });
         });
     
         closeBtn.onclick = () => modal.style.display = 'none';
         window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+        // 💾 Save edits via AJAX 
+        saveBtn.addEventListener('click', () => {
+            const logId = document.getElementById('modalId').textContent;
+            const newDetails = document.getElementById('modalDetails').value;
+
+            fetch('update_log.php', {
+                method: 'POST', 
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({
+                    log_id: logId, 
+                    details: newDetails
+                })
+            })
+            .then(res => res.text())
+            .then(response => {
+                if (response.includes("success")) { 
+                    saveMsg.textContent = "✅ Details updated successfully!";
+                } else {
+                    saveMsg.style.color = "red";
+                    saveMsg.textContent = "❌ Failed to update log.";
+                }
+            })
+            .catch (() => { 
+                saveMsg.style.color = "red";
+                        saveMsg.textContent = "⚠️ Error saving changes.";
+            });
+        });
     </script>
 </body>
 </html>
