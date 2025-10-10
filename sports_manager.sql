@@ -116,3 +116,14 @@ CREATE TABLE AuditLog (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
+
+-- Log Notes
+CREATE TABLE LogNotes ( 
+    note_id INT AUTO_INCREMENT PRIMARY KEY, 
+    log_id INT NOT NULL, 
+    user_id INT NOT NULL,
+    note_text TEXT NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    FOREIGN KEY (log_id) REFERENCES AuditLog(log_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES Users (user_id) ON DELETE CASCADE
+);

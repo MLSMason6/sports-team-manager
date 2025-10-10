@@ -218,6 +218,17 @@ try {
         <p><strong>Date:</strong> <span id="modalDate"></span></p>
         <button id="saveChanges" style="margin-top:10px; background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">💾 Save Changes</button>
         <p id="saveMessage" style="color:green; margin-top:8px;"></p>
+        
+        <hr>
+        
+        <h4>🗒 Notes</h4>
+        <div id="notesList" style="background:#f4f4f4; padding:10px; border-radius:5px; max-height:150px; overflow-y:auto;">
+            <p style="color:#666;">Loading notes...</p>
+        </div>
+        
+        <textarea id="newNote" placeholder="Add a note..." style="width:100%; height:80px; margin-top:10px; padding:10px; border-radius:5px; border:1px solid #ccc;"></textarea>
+        <button id="addNoteBtn" style="margin-top:8px; background:#2980b9; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">➕ Add Note</button>
+        <p id="noteMsg" style="color:green; margin-top:8px;"></p>
     </div> 
     
     <script>
@@ -288,6 +299,82 @@ try {
         .catch(() => {
             saveMsg.style.color = "red";
             saveMsg.textContent = "⚠️ Error saving changes.";
+        });
+    });
+
+    // 🗒 Load notes when modal open
+    function loadNotes (logId) { 
+        const notesDiv = document.getElementByID('notesList');
+        notesDiv.innerHTML = "<p style='color:#666;'>Loading notes...</p>";
+
+        fetch('get_notes.php?log_id=' + logId)
+        .then(res => res.json())
+        .then(data => { 
+            if (data.length === 0) { 
+                notesDiv.innerHTML = "<p style='color:#999;'>No notes yet.</p>";
+            } else { 
+                notesDiv.innerHTML = data.map(note => `
+                                <div style="background:white; margin-bottom:6px; padding:8px; border-radius:5px; border:1px solid #ddd;">
+                                    <p style="margin:0;">${note.note_text}</p>
+                                    <small style="color:#777;">— ${note.username}, ${note.created_at}</small>
+                                </div>
+                            `).join('');
+            }
+        })
+        .catch(() => notesDiv.innerHTML = "<p style='color:red;'>Error loading notes.</p>");
+    }
+
+    // When opening a log modal, load its notes 
+    detailLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            activeRow = link.closest('tr');
+            const logId = link.dataset.id;
+    
+            document.getElementById('modalId').textContent = logId;
+            document.getElementById('modalUser').textContent = link.dataset.user;
+            document.getElementById('modalAction').textContent = link.dataset.action;
+            document.getElementById('modalDetails').value = link.dataset.details;
+            document.getElementById('modalDate').textContent = link.dataset.date;
+    
+            saveMsg.textContent = "";
+            modal.style.display = 'block';
+            loadNotes(logId);
+        });
+    });
+
+    // ➕ Add note
+    document.getElementById('addNoteBtn').addEventListener('click', () => {
+        const noteText = document.getElementById('newNote').value.trim();
+        const logId = document.getElementById('modalId').textContent;
+        const noteMsg = document.getElementById('noteMsg');
+    
+        if (noteText === "") {
+            noteMsg.style.color = "red";
+            noteMsg.textContent = "⚠️ Note cannot be empty.";
+            return;
+        }
+    
+        fetch('add_note.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams({ log_id: logId, note: noteText })
+        })
+        .then(res => res.text())
+        .then(response => {
+            if (response.includes("success")) {
+                noteMsg.style.color = "green";
+                noteMsg.textContent = "✅ Note added!";
+                document.getElementById('newNote').value = "";
+                loadNotes(logId);
+            } else {
+                noteMsg.style.color = "red";
+                noteMsg.textContent = "❌ Failed to add note.";
+            }
+        })
+        .catch(() => {
+            noteMsg.style.color = "red";
+            noteMsg.textContent = "⚠️ Error adding note.";
         });
     });
     </script>
