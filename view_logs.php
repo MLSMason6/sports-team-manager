@@ -221,56 +221,75 @@ try {
     </div> 
     
     <script>
-        // Modal JS
-        const modal = document.getElementById('detailsModal');
-        const closeBtn = document.querySelector('.close-btn');
-        const detailLinks = document.querySelectorAll('.view-details');
-        const saveBtn = document.getElementById('saveChanges');
-        const saveMsg = document.getElementById('saveMessage');
-
-        detailLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.getElementById('modalId').textContent = link.dataset.id;
-                document.getElementById('modalUser').textContent = link.dataset.user;
-                document.getElementById('modalAction').textContent = link.dataset.action;
-                document.getElementById('modalDetails').textContent = link.dataset.details;
-                document.getElementById('modalDate').textContent = link.dataset.date;
-                saveMsg.textContnet = "";
-                modal.style.display = 'block';
-            });
-        });
+    const modal = document.getElementById('detailsModal');
+    const closeBtn = document.querySelector('.close-btn');
+    const detailLinks = document.querySelectorAll('.view-details');
+    const saveBtn = document.getElementById('saveChanges');
+    const saveMsg = document.getElementById('saveMessage');
     
-        closeBtn.onclick = () => modal.style.display = 'none';
-        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-
-        // 💾 Save edits via AJAX 
-        saveBtn.addEventListener('click', () => {
-            const logId = document.getElementById('modalId').textContent;
-            const newDetails = document.getElementById('modalDetails').value;
-
-            fetch('update_log.php', {
-                method: 'POST', 
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: new URLSearchParams({
-                    log_id: logId, 
-                    details: newDetails
-                })
-            })
-            .then(res => res.text())
-            .then(response => {
-                if (response.includes("success")) { 
-                    saveMsg.textContent = "✅ Details updated successfully!";
-                } else {
-                    saveMsg.style.color = "red";
-                    saveMsg.textContent = "❌ Failed to update log.";
-                }
-            })
-            .catch (() => { 
-                saveMsg.style.color = "red";
-                        saveMsg.textContent = "⚠️ Error saving changes.";
-            });
+    let activeRow = null; // track which row was opened
+    
+    detailLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+    
+            // Remember the row being viewed
+            activeRow = link.closest('tr');
+    
+            document.getElementById('modalId').textContent = link.dataset.id;
+            document.getElementById('modalUser').textContent = link.dataset.user;
+            document.getElementById('modalAction').textContent = link.dataset.action;
+            document.getElementById('modalDetails').value = link.dataset.details;
+            document.getElementById('modalDate').textContent = link.dataset.date;
+            saveMsg.textContent = "";
+            modal.style.display = 'block';
         });
+    });
+    
+    closeBtn.onclick = () => modal.style.display = 'none';
+    window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+    
+    // 💾 Save edits via AJAX and auto-update table
+    saveBtn.addEventListener('click', () => {
+        const logId = document.getElementById('modalId').textContent;
+        const newDetails = document.getElementById('modalDetails').value;
+    
+        fetch('update_log.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams({
+                log_id: logId,
+                details: newDetails
+            })
+        })
+        .then(res => res.text())
+        .then(response => {
+            if (response.includes("success")) {
+                saveMsg.style.color = "green";
+                saveMsg.textContent = "✅ Details updated successfully!";
+    
+                // Update visible details cell in the table
+                if (activeRow) {
+                    const detailsCell = activeRow.querySelector('td:nth-child(4)');
+                    const viewLink = activeRow.querySelector('.view-details');
+                    detailsCell.textContent = newDetails.length > 40 ? newDetails.substring(0, 40) + '...' : newDetails;
+                    viewLink.dataset.details = newDetails;
+                }
+    
+                setTimeout(() => {
+                    saveMsg.textContent = "";
+                    modal.style.display = 'none';
+                }, 1200);
+            } else {
+                saveMsg.style.color = "red";
+                saveMsg.textContent = "❌ Failed to update log.";
+            }
+        })
+        .catch(() => {
+            saveMsg.style.color = "red";
+            saveMsg.textContent = "⚠️ Error saving changes.";
+        });
+    });
     </script>
 </body>
 </html>
