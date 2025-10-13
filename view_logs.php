@@ -221,14 +221,17 @@ try {
         
         <hr>
         
-        <h4>🗒 Notes</h4>
-        <div id="notesList" style="background:#f4f4f4; padding:10px; border-radius:5px; max-height:150px; overflow-y:auto;">
+        <h3 style="margin-top:20px;">🗒 Notes</h3>
+        
+        <div id="notesList" style="background:#eef1f5; padding:10px; border-radius:8px; max-height:200px; overflow-y:auto; border:1px solid #ccc;">
             <p style="color:#666;">Loading notes...</p>
         </div>
         
-        <textarea id="newNote" placeholder="Add a note..." style="width:100%; height:80px; margin-top:10px; padding:10px; border-radius:5px; border:1px solid #ccc;"></textarea>
-        <button id="addNoteBtn" style="margin-top:8px; background:#2980b9; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">➕ Add Note</button>
-        <p id="noteMsg" style="color:green; margin-top:8px;"></p>
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <textarea id="newNote" placeholder="Add a note..." style="width:100%; height:80px; padding:10px; border-radius:6px; border:1px solid #bbb; resize:none;"></textarea>
+            <button id="addNoteBtn" style="align-self:flex-end; background:#0078d4; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;">➕ Add Note</button>
+            <p id="noteMsg" style="color:green; margin:0;"></p>
+        </div>
     </div> 
     
     <script>
@@ -303,23 +306,43 @@ try {
     });
 
     // 🗒 Load notes when modal open
-    function loadNotes (logId) { 
-        const notesDiv = document.getElementByID('notesList');
+    function loadNotes(logId) {
+        const notesDiv = document.getElementById('notesList');
         notesDiv.innerHTML = "<p style='color:#666;'>Loading notes...</p>";
-
+    
         fetch('get_notes.php?log_id=' + logId)
         .then(res => res.json())
-        .then(data => { 
-            if (data.length === 0) { 
+        .then(data => {
+            if (data.length === 0) {
                 notesDiv.innerHTML = "<p style='color:#999;'>No notes yet.</p>";
-            } else { 
-                notesDiv.innerHTML = data.map(note => `
-                                <div style="background:white; margin-bottom:6px; padding:8px; border-radius:5px; border:1px solid #ddd;">
-                                    <p style="margin:0;">${note.note_text}</p>
-                                    <small style="color:#777;">— ${note.username}, ${note.created_at}</small>
-                                </div>
-                            `).join('');
+                return;
             }
+    
+            notesDiv.innerHTML = data.map(note => {
+                const initials = note.username.charAt(0).toUpperCase();
+                const isOwn = note.username === "<?=$_SESSION['username'] ?? ''?>";
+                const bubbleColor = isOwn ? "#0078d4" : "#e1e9f2";
+                const textColor = isOwn ? "white" : "#333";
+                const align = isOwn ? "flex-end" : "flex-start";
+    
+                return `
+                <div style="display:flex; align-items:flex-start; justify-content:${align}; margin-bottom:10px;">
+                    ${!isOwn ? `
+                    <div style="width:32px; height:32px; background:#ccc; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; margin-right:8px;">
+                        ${initials}
+                    </div>` : ""}
+                    <div style="background:${bubbleColor}; color:${textColor}; padding:10px 12px; border-radius:10px; max-width:75%; word-wrap:break-word;">
+                        <p style="margin:0 0 4px 0;">${note.note_text}</p>
+                        <small style="font-size:12px; color:${isOwn ? "rgba(255,255,255,0.8)" : "#555"};">${note.username} • ${note.created_at}</small>
+                    </div>
+                    ${isOwn ? `
+                    <div style="width:32px; height:32px; background:#0078d4; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; margin-left:8px;">
+                        ${initials}
+                    </div>` : ""}
+                </div>`;
+            }).join('');
+    
+            notesDiv.scrollTop = notesDiv.scrollHeight; // auto-scroll to bottom
         })
         .catch(() => notesDiv.innerHTML = "<p style='color:red;'>Error loading notes.</p>");
     }
