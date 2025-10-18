@@ -58,7 +58,7 @@ $role = $_SESSION['role'];
     </header>
 
     <div class="container">
-        <?php if ($role === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'superadmin' || $role === 'coach'): ?>
         <!-- Teams -->
          <div class="card">
             <h2>Teams</h2>
@@ -93,23 +93,23 @@ $role = $_SESSION['role'];
             <a href="player_report.php">📊 Player Report</a>
             <a href="team_report.php">📈 Team Report</a>
         </div>
+        <?php endif; ?>
 
         <!-- Users -->
-            <?php if ($role === 'superadmin'): ?>
-            <div class="card">
-                <h2>Users</h2>
-                <a href="register.php">➕ Register User</a>
-                <a href="manage_users.php">👥 Manage Users</a>
-            </div>
-            <?php endif; ?>
+        <?php if ($role === 'superadmin'): ?>
+        <div class="card">
+            <h2>Users</h2>
+            <a href="register.php">➕ Register User</a>
+            <a href="manage_users.php">👥 Manage Users</a>
+        </div>
+        <?php endif; ?>
 
-            <?php if ($role === 'superadmin'): ?>
-            <div class="card">
-                <h2>Audit Logs</h2>
-                <a href="view_logs.php">📜 View Logs</a>
-            </div>
-            <?php endif; ?>
-        
+        <?php if ($role === 'superadmin'): ?>
+        <div class="card">
+            <h2>Audit Logs</h2>
+            <a href="view_logs.php">📜 View Logs</a>
+        </div>
+        <?php endif; ?>
     </div>
 </body>
 </html>
