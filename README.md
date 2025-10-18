@@ -45,4 +45,4 @@ Super Admins can view system logs, add notes, and edit details — all in real-t
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/sports-manager-admin.git
+   git clone https://github.com/mlsmason6/sports-manager-admin.git
