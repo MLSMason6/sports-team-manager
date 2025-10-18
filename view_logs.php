@@ -387,21 +387,125 @@ try {
         });
     });
     
-    // Stop polling when modal is closed
+    // --- SMART POLLING SYSTEM ---
+    let activeLogId = null;
+    let notePolling = null;
+    let lastNoteCount = 0;
+    let isModalOpen = false;
+    let isTabActive = true;
+    
+    // Load notes (core fetch function)
+    function loadNotes(logId, silent = false) {
+        const notesDiv = document.getElementById('notesList');
+        if (!silent) notesDiv.innerHTML = "<p style='color:#666;'>Loading notes...</p>";
+    
+        fetch('get_notes.php?log_id=' + logId)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length !== lastNoteCount || !silent) {
+                lastNoteCount = data.length;
+    
+                if (data.length === 0) {
+                    notesDiv.innerHTML = "<p style='color:#999;'>No notes yet.</p>";
+                    return;
+                }
+    
+                notesDiv.innerHTML = data.map(note => {
+                    const initials = note.username.charAt(0).toUpperCase();
+                    const isOwn = note.username === "<?=$_SESSION['username'] ?? ''?>";
+                    const bubbleColor = isOwn ? "#0078d4" : "#e1e9f2";
+                    const textColor = isOwn ? "white" : "#333";
+                    const align = isOwn ? "flex-end" : "flex-start";
+    
+                    return `
+                    <div style="display:flex; align-items:flex-start; justify-content:${align}; margin-bottom:10px;">
+                        ${!isOwn ? `
+                        <div style="width:32px; height:32px; background:#ccc; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; margin-right:8px;">
+                            ${initials}
+                        </div>` : ""}
+                        <div style="background:${bubbleColor}; color:${textColor}; padding:10px 12px; border-radius:10px; max-width:75%; word-wrap:break-word;">
+                            <p style="margin:0 0 4px 0;">${note.note_text}</p>
+                            <small style="font-size:12px; color:${isOwn ? "rgba(255,255,255,0.8)" : "#555"};">${note.username} • ${note.created_at}</small>
+                        </div>
+                        ${isOwn ? `
+                        <div style="width:32px; height:32px; background:#0078d4; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; margin-left:8px;">
+                            ${initials}
+                        </div>` : ""}
+                    </div>`;
+                }).join('');
+    
+                notesDiv.scrollTop = notesDiv.scrollHeight;
+            }
+        })
+        .catch(() => {
+            if (!silent) notesDiv.innerHTML = "<p style='color:red;'>Error loading notes.</p>";
+        });
+    }
+    
+    // --- POLLING CONTROLS ---
+    function startNotePolling() {
+        if (notePolling) clearInterval(notePolling);
+        notePolling = setInterval(() => {
+            if (isModalOpen && isTabActive && activeLogId) {
+                loadNotes(activeLogId, true);
+            }
+        }, 5000);
+    }
+    
+    function stopNotePolling() {
+        if (notePolling) {
+            clearInterval(notePolling);
+            notePolling = null;
+        }
+    }
+    
+    // --- HANDLE TAB VISIBILITY ---
+    document.addEventListener("visibilitychange", () => {
+        isTabActive = !document.hidden;
+        if (isTabActive && isModalOpen && activeLogId) {
+            loadNotes(activeLogId, true); // refresh immediately when returning
+        }
+    });
+    
+    // --- OPEN MODAL ---
+    detailLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            activeRow = link.closest('tr');
+            activeLogId = link.dataset.id;
+    
+            document.getElementById('modalId').textContent = activeLogId;
+            document.getElementById('modalUser').textContent = link.dataset.user;
+            document.getElementById('modalAction').textContent = link.dataset.action;
+            document.getElementById('modalDetails').value = link.dataset.details;
+            document.getElementById('modalDate').textContent = link.dataset.date;
+    
+            saveMsg.textContent = "";
+            modal.style.display = 'block';
+            isModalOpen = true;
+    
+            loadNotes(activeLogId);
+            startNotePolling();
+        });
+    });
+    
+    // --- CLOSE MODAL ---
     closeBtn.onclick = () => {
         modal.style.display = 'none';
-        clearInterval(notePolling);
+        stopNotePolling();
+        isModalOpen = false;
         activeLogId = null;
     };
-    window.onclick = (e) => { 
-        if (e.target === modal) { 
-            modal.style.display = 'none'; 
-            clearInterval(notePolling); 
+    window.onclick = (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            stopNotePolling();
+            isModalOpen = false;
             activeLogId = null;
-        } 
+        }
     };
     
-    // ➕ Add note
+    // --- ADD NOTE ---
     document.getElementById('addNoteBtn').addEventListener('click', () => {
         const noteText = document.getElementById('newNote').value.trim();
         const logId = document.getElementById('modalId').textContent;
